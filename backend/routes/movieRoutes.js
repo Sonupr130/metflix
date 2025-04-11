@@ -21,16 +21,10 @@ const upload = multer({
   }
 });
 
-// Add a new movie
-router.post('/add-movie', upload.single('coverImage'), addMovie);
-// Search movies
-router.get('/movies/search', searchMovies);
-// Get all movies
-router.get('/movies', getAllMovies);
+
+router.post('/add-movie', upload.single('coverImage'), addMovie);   // Add a new movie
+router.get('/movies/search', searchMovies);   // Search movies
+router.get('/movies', getAllMovies);  // Get all movies
 
 export default router; 
 
-// value={searchTerm}
-// onChange={(e) => handleSearchChange(e.target.value)}
-// onFocus={() => searchTerm.length > 0 && setShowSearchResults(true)}
-// onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}

@@ -13,8 +13,20 @@ const movieSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    // required: true,
-    enum: ['Action', 'Comedy', 'Drama', 'Sci-Fi', 'Horror', 'Romance', 'Other']
+    enum: [
+      'bollywood',
+      'hollywood',
+      'anime',
+      'south',
+      'web-series',
+      'action',
+      'comedy',
+      'drama',
+      'sci-fi',
+      'horror',
+      'romance',
+      'Other'  // Added "Other" as an option
+    ],
   },
   year: {
     type: Number,
@@ -30,6 +42,9 @@ const movieSchema = new mongoose.Schema({
   coverImage: {
     type: String, // This will store the path to the image file
     // required: true
+  },
+  downloads:{
+    type: String,
   },
   createdAt: {
     type: Date,

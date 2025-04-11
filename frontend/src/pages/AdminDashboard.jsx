@@ -33,6 +33,7 @@ import {
   FiCopy,
   FiSearch,
 } from "react-icons/fi";
+import { toast } from "react-toastify";
 
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -45,8 +46,9 @@ const AdminDashboard = () => {
     category: "",
     year: "",
     directUrl: "",
-    coverImage: null,
-    coverImagePreview: "",
+    coverImage: null,    // For file upload
+    coverImageUrl: "",   // For URL
+    coverImagePreview: ""
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -167,10 +169,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    fetchFiles();
-  };
 
   // ------------------------------------------------------------------
 
@@ -198,56 +196,36 @@ const AdminDashboard = () => {
   ];
 
   // Mock data for recent movies
-  const [movies, setMovies] = useState([
-    {
-      id: 1,
-      title: "The Matrix Resurrections",
-      genre: "Sci-Fi",
-      year: 2021,
-      downloads: 1205,
-      status: "active",
-    },
-    {
-      id: 2,
-      title: "Dune",
-      genre: "Sci-Fi",
-      year: 2021,
-      downloads: 980,
-      status: "active",
-    },
-    {
-      id: 3,
-      title: "No Time to Die",
-      genre: "Action",
-      year: 2021,
-      downloads: 873,
-      status: "active",
-    },
-    {
-      id: 4,
-      title: "The Batman",
-      genre: "Action",
-      year: 2022,
-      downloads: 1456,
-      status: "active",
-    },
-    {
-      id: 5,
-      title: "Top Gun: Maverick",
-      genre: "Action",
-      year: 2022,
-      downloads: 1089,
-      status: "active",
-    },
-    {
-      id: 6,
-      title: "Spider-Man: No Way Home",
-      genre: "Action",
-      year: 2021,
-      downloads: 2103,
-      status: "active",
-    },
-  ]);
+  const [movies, setMovies] = useState([]);
+
+  // Fetch movies from API
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const response = await axios("http://localhost:5000/api/movies");
+        setMovies(response.data); // Use response.data instead of just response
+        console.log(response.data)
+      } catch (error) {
+        console.error("Error fetching movies:", error);
+        setMovies([]); // Set to empty array if there's an error
+      }
+    };
+  
+    fetchMovies();
+  }, []);
+
+  // Function to get default values for missing fields
+  const getMovieWithDefaults = (movie) => {
+    return {
+      id: movie._id || Math.random().toString(36).substr(2, 9),
+      title: movie.title || 'Untitled Movie',
+      genre: movie.category || 'Unknown Genre',
+      year: movie.year || 'Unknown Year',
+      downloads: movie.downloads || 0, 
+      status: 'active', // Default status
+      coverImage: movie.coverImage 
+    };
+  };
 
   // Mock data for alerts
   const alerts = [
@@ -319,28 +297,136 @@ const AdminDashboard = () => {
     setSearchResults(mockApiResults);
   };
 
+  // const handleAddMovie = async (e) => {
+  //   e.preventDefault();
+
+  //   try {
+  //     const formData = new FormData();
+
+  //     // Append values or 'Not Available' if undefined/null/empty
+  //     formData.append("title", newMovie.title || "Not Available");
+  //     formData.append("description", newMovie.description || "Not Available");
+  //     formData.append("category", newMovie.category || "Not Available");
+  //     formData.append("year", newMovie.year || "Not Available");
+  //     formData.append("directUrl", newMovie.directUrl || "Not Available");
+
+  //     // if (newMovie.coverImageFile) {
+  //     //   formData.append('coverImage', newMovie.coverImageFile);
+  //     // } else {
+  //     //   // Optionally handle missing cover image
+  //     //   alert('Please select a cover image');
+  //     //   return;
+  //     // }
+
+  //     // Using axios for the request (make sure to import axios)
+  //     const response = await axios.post(
+  //       "http://localhost:5000/api/add-movie",
+  //       formData,
+  //       {
+  //         headers: {
+  //           "Content-Type": "multipart/form-data",
+  //         },
+  //       }
+  //     );
+
+  //     console.log("Movie added:", response.data);
+
+  //     // Reset form and close modal
+  //     setShowAddMovieModal(false);
+  //     setNewMovie({
+  //       title: "",
+  //       description: "",
+  //       category: "",
+  //       year: "",
+  //       directUrl: "",
+  //       coverImageFile: null,
+  //       coverImagePreview: "",
+  //     });
+  //     setSearchTerm("");
+
+  //     // Show success message
+  //     alert("Movie added successfully!");
+  //   } catch (error) {
+  //     console.error("Error adding movie:", error);
+  //     alert(
+  //       `Error: ${
+  //         error.response?.data?.error || error.message || "Failed to add movie"
+  //       }`
+  //     );
+  //   }
+  // };
+
+
+
+  // const handleAddMovie = async (e) => {
+  //   e.preventDefault();
+  
+  //   try {
+  //     const formData = new FormData();
+  
+  //     // Append all fields
+  //     formData.append("title", newMovie.title || "Not Available");
+  //     formData.append("description", newMovie.description || "Not Available");
+  //     formData.append("category", newMovie.category || "Not Available");
+  //     formData.append("year", newMovie.year || "Not Available");
+  //     formData.append("directUrl", newMovie.directUrl || "Not Available");
+      
+  //     // Append cover image URL if provided
+  //     if (newMovie.coverImageUrl) {
+  //       formData.append("coverImageUrl", newMovie.coverImageUrl);
+  //     }
+      
+  //     // Append file if uploaded
+  //     if (newMovie.coverImageFile) {
+  //       formData.append('coverImage', newMovie.coverImageFile);
+  //     }
+  
+  //     const response = await axios.post(
+  //       "http://localhost:5000/api/add-movie",
+  //       formData,
+  //       {
+  //         headers: {
+  //           "Content-Type": "multipart/form-data",
+  //         },
+  //       }
+  //     );
+  
+  //     console.log("Movie added:", response.data);
+  //     // Reset form and show success message...
+  //   } catch (error) {
+  //     console.error("Error adding movie:", error);
+  //     alert(
+  //       `Error: ${
+  //         error.response?.data?.error || error.message || "Failed to add movie"
+  //       }`
+  //     );
+  //   }
+  // };
+
+
   const handleAddMovie = async (e) => {
     e.preventDefault();
-
+  
     try {
       const formData = new FormData();
-
-      // Append values or 'Not Available' if undefined/null/empty
+  
+      // Append all fields
       formData.append("title", newMovie.title || "Not Available");
       formData.append("description", newMovie.description || "Not Available");
       formData.append("category", newMovie.category || "Not Available");
       formData.append("year", newMovie.year || "Not Available");
       formData.append("directUrl", newMovie.directUrl || "Not Available");
-
-      // if (newMovie.coverImageFile) {
-      //   formData.append('coverImage', newMovie.coverImageFile);
-      // } else {
-      //   // Optionally handle missing cover image
-      //   alert('Please select a cover image');
-      //   return;
-      // }
-
-      // Using axios for the request (make sure to import axios)
+      
+      // Append cover image URL if provided
+      if (newMovie.coverImageUrl) {
+        formData.append("coverImageUrl", newMovie.coverImageUrl);
+      }
+      
+      // Append file if uploaded
+      if (newMovie.coverImageFile) {
+        formData.append('coverImage', newMovie.coverImageFile);
+      }
+  
       const response = await axios.post(
         "http://localhost:5000/api/add-movie",
         formData,
@@ -350,10 +436,20 @@ const AdminDashboard = () => {
           },
         }
       );
-
+  
       console.log("Movie added:", response.data);
-
-      // Reset form and close modal
+      
+      // Show success toast
+      toast.success("Movie added successfully!", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+  
+      // Close modal and reset form
       setShowAddMovieModal(false);
       setNewMovie({
         title: "",
@@ -363,20 +459,30 @@ const AdminDashboard = () => {
         directUrl: "",
         coverImageFile: null,
         coverImagePreview: "",
+        coverImageUrl: ""
       });
-      setSearchTerm("");
-
-      // Show success message
-      alert("Movie added successfully!");
+  
+      // Optional: Refresh movies list
+      const moviesResponse = await axios.get("http://localhost:5000/api/movies");
+      setMovies(moviesResponse.data);
+  
     } catch (error) {
       console.error("Error adding movie:", error);
-      alert(
-        `Error: ${
-          error.response?.data?.error || error.message || "Failed to add movie"
-        }`
+      // Show error toast
+      toast.error(
+        error.response?.data?.error || error.message || "Failed to add movie",
+        {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        }
       );
     }
   };
+
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -387,6 +493,8 @@ const AdminDashboard = () => {
           ...newMovie,
           coverImage: file,
           coverImagePreview: reader.result,
+          coverImageFile: file,
+        coverImageUrl: "" // Clear URL if file is selected
         });
       };
       reader.readAsDataURL(file);
@@ -505,28 +613,31 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {movies.slice(0, 5).map((movie) => (
-                      <tr key={movie.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {movie.title}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {movie.genre}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {movie.year}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {movie.downloads}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            {movie.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
+      {movies.slice(0, 5).map((movie) => {
+        const movieWithDefaults = getMovieWithDefaults(movie);
+        return (
+          <tr key={movieWithDefaults.id}>
+            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+              {movieWithDefaults.title}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {movieWithDefaults.genre}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {movieWithDefaults.year}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {movieWithDefaults.downloads}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap">
+              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                {movieWithDefaults.status}
+              </span>
+            </td>
+          </tr>
+        );
+      })}
+    </tbody>
                 </table>
               </div>
             </div>
@@ -626,38 +737,46 @@ const AdminDashboard = () => {
 
         {viewMode === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {movies.map((movie) => (
-              <div
-                key={movie.id}
-                className="bg-white rounded-lg shadow overflow-hidden"
-              >
-                <div className="h-48 bg-gray-200 relative">
-                  <img
-                    src={`/api/placeholder/300/400`}
-                    alt={movie.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-medium text-gray-900">{movie.title}</h3>
-                  <div className="mt-2 flex justify-between items-center">
-                    <div className="text-sm text-gray-500">
-                      {movie.genre} • {movie.year}
-                    </div>
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                      Active
-                    </span>
-                  </div>
-                  <div className="mt-4 flex justify-between items-center text-sm">
-                    <span>{movie.downloads} downloads</span>
-                    <button className="text-indigo-600 hover:text-indigo-800 font-medium">
-                      Edit
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+  {movies.map((movie) => {
+    const movieWithDefaults = getMovieWithDefaults(movie);
+    return (
+      <div
+        key={movieWithDefaults.id}
+        className="bg-white rounded-lg shadow overflow-hidden"
+      >
+        <div className="h-48 bg-gray-200 relative">
+          <img
+            src={movieWithDefaults.coverImage || "https://user-images.githubusercontent.com/582516/98960633-6c6a1600-24e3-11eb-89f1-045f55a1e494.png"}
+            alt="cover image"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="p-4">
+          <h3 className="font-medium text-gray-900">{movieWithDefaults.title}</h3>
+          <div className="mt-2 flex justify-between items-center">
+            <div className="text-sm text-gray-500">
+              {movieWithDefaults.genre} • {movieWithDefaults.year}
+            </div>
+            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+              {movieWithDefaults.status}
+            </span>
           </div>
+          <div className="mt-4 flex justify-between items-center text-sm">
+            {/* Only show downloads if greater than 0 */}
+            {movieWithDefaults.downloads > 0 ? (
+              <span>{movieWithDefaults.downloads} downloads</span>
+            ) : (
+              <span className="text-gray-400">No downloads yet</span>
+            )}
+            <button className="text-indigo-600 hover:text-indigo-800 font-medium">
+              Edit
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  })}
+</div>
         ) : (
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
@@ -748,7 +867,7 @@ const AdminDashboard = () => {
                       <div className="mt-4">
                         <form onSubmit={handleAddMovie}>
                           {/* Cover Image Upload */}
-                          <div className="mb-4">
+                          {/* <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Cover Image
                             </label>
@@ -793,7 +912,92 @@ const AdminDashboard = () => {
                                 </div>
                               </div>
                             )}
-                          </div>
+                          </div> */}
+
+                          <div className="mb-4">
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      Cover Image
+    </label>
+    
+    {/* Image Preview */}
+    {newMovie.coverImagePreview || newMovie.coverImageUrl ? (
+      <div className="relative">
+        <img
+          src={newMovie.coverImagePreview || newMovie.coverImageUrl}
+          alt="Cover preview"
+          className="h-48 w-full object-cover rounded-md"
+        />
+        <button
+          type="button"
+          onClick={() => {
+            setNewMovie({
+              ...newMovie,
+              coverImagePreview: "",
+              coverImageUrl: "",
+              coverImageFile: null
+            });
+          }}
+          className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md"
+        >
+          <XCircle className="h-5 w-5 text-red-500" />
+        </button>
+      </div>
+    ) : (
+      <div className="h-48 w-full bg-gray-200 flex items-center justify-center rounded-md">
+        <span className="text-gray-500">No cover image selected</span>
+      </div>
+    )}
+
+    {/* File Upload */}
+    <div className="mt-4">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Upload Cover Image
+      </label>
+      <div className="flex items-center">
+        <label className="cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500">
+          <span>Select File</span>
+          <input
+            type="file"
+            className="sr-only"
+            accept="image/*"
+            onChange={handleImageChange}
+          />
+        </label>
+        <span className="ml-2 text-sm text-gray-500">
+          {newMovie.coverImageFile ? newMovie.coverImageFile.name : "No file chosen"}
+        </span>
+      </div>
+    </div>
+
+    {/* OR divider */}
+    <div className="flex items-center my-4">
+      <div className="flex-grow border-t border-gray-300"></div>
+      <span className="mx-2 text-sm text-gray-500">OR</span>
+      <div className="flex-grow border-t border-gray-300"></div>
+    </div>
+
+    {/* Cover Image URL */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Cover Image URL
+      </label>
+      <input
+        type="url"
+        value={newMovie.coverImageUrl}
+        onChange={(e) => {
+          setNewMovie({
+            ...newMovie,
+            coverImageUrl: e.target.value,
+            coverImageFile: null,
+            coverImagePreview: ""
+          });
+        }}
+        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        placeholder="https://example.com/image.jpg"
+      />
+    </div>
+  </div>
+
 
                           {/* Movie Title (not search) */}
                           <div className="mb-4 relative">
@@ -802,7 +1006,7 @@ const AdminDashboard = () => {
                                 htmlFor="title"
                                 className="block text-sm font-medium text-gray-700"
                               >
-                                Movie Title
+                                Title
                               </label>
                               <div className="relative">
                                 <input
@@ -892,7 +1096,6 @@ const AdminDashboard = () => {
                                 })
                               }
                               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                              required
                             />
                           </div>
 
@@ -919,12 +1122,17 @@ const AdminDashboard = () => {
                                 required
                               >
                                 <option value="">Select a category</option>
-                                <option value="Action">Action</option>
-                                <option value="Comedy">Comedy</option>
-                                <option value="Drama">Drama</option>
-                                <option value="Sci-Fi">Sci-Fi</option>
-                                <option value="Horror">Horror</option>
-                                <option value="Romance">Romance</option>
+                                <option value="bollywood">Bollywood</option>
+                                <option value="hollywood">Hollywood</option>
+                                <option value="anime">Anime</option>
+                                <option value="south">South</option>
+                                <option value="web-series">Web Series</option>
+                                <option value="action">Action</option>
+                                <option value="comedy">Comedy</option>
+                                <option value="drama">Drama</option>
+                                <option value="sci-fi">Sci-Fi</option>
+                                <option value="horror">Horror</option>
+                                <option value="romance">Romance</option>
                               </select>
                             </div>
                             <div>
@@ -948,7 +1156,6 @@ const AdminDashboard = () => {
                                   })
                                 }
                                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                required
                               />
                             </div>
                           </div>
@@ -973,7 +1180,6 @@ const AdminDashboard = () => {
                                 })
                               }
                               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                              required
                             />
                           </div>
 

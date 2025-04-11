@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Film, Moon, ShieldUser, Sun } from 'lucide-react';
 import MovieCarousel from './MovieCarousel.jsx';
 import MovieLogo from "../assets/logo.png";
+import { Link } from 'react-router-dom';
 
 const categories = [
   { id: 'all', name: 'All' },
@@ -86,7 +87,8 @@ function Home() {
                 <Moon className="text-gray-600" size={23} />
               )}
             </button>
-            <button
+            <Link
+            to="/admin-dashboard"
               className="p-1 sm:p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               aria-label="Toggle dark mode"
             >
@@ -96,7 +98,7 @@ function Home() {
               ) : (
                 <ShieldUser className="text-gray-600" size={20} />
               )} */}
-            </button>
+            </Link>
             </div>
           </div>
         </div>

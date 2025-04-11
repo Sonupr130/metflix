@@ -1122,17 +1122,17 @@ const AdminDashboard = () => {
                                 required
                               >
                                 <option value="">Select a category</option>
-                                <option value="bollywood">Bollywood</option>
-                                <option value="hollywood">Hollywood</option>
-                                <option value="anime">Anime</option>
-                                <option value="south">South</option>
-                                <option value="web-series">Web Series</option>
-                                <option value="action">Action</option>
-                                <option value="comedy">Comedy</option>
-                                <option value="drama">Drama</option>
-                                <option value="sci-fi">Sci-Fi</option>
-                                <option value="horror">Horror</option>
-                                <option value="romance">Romance</option>
+                                <option value="Bollywood">Bollywood</option>
+                                <option value="Hollywood">Hollywood</option>
+                                <option value="Anime">Anime</option>
+                                <option value="South">South</option>
+                                <option value="Web-series">Web Series</option>
+                                <option value="Action">Action</option>
+                                <option value="Comedy">Comedy</option>
+                                <option value="Drama">Drama</option>
+                                <option value="Sci-fi">Sci-Fi</option>
+                                <option value="Horror">Horror</option>
+                                <option value="Romance">Romance</option>
                               </select>
                             </div>
                             <div>

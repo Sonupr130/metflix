@@ -99,7 +99,7 @@ const MovieDetails = ({ movie, onClose, darkMode }) => {
       </h2>
       {movie.year && (
         <span className={`text-md ${darkMode ? 'text-gray-300' : 'text-purple-600'}`}>
-          {movie.year}
+          Released Date: {movie.year}
         </span>
       )}
     </div>

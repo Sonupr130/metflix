@@ -124,3 +124,21 @@ export const getAllMovies = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch movies' });
   }
 };
+
+// get movies by category
+export const getMoviesByCategory = async (req, res) => {
+  try {
+    const { category } = req.params;
+    
+    let query = {};
+    if (category && category !== 'all') {
+      query.category = category;
+    }
+
+    const movies = await Movie.find(query).sort({ createdAt: -1 });
+    res.json(movies);
+  } catch (error) {
+    console.error('Error fetching movies:', error);
+    res.status(500).json({ error: 'Failed to fetch movies' });
+  }
+};

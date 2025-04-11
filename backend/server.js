@@ -276,6 +276,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import moviesRoutes from "./routes/movieRoutes.js"
+import authRoutes from "./routes/authRoutes.js"
 
 dotenv.config();
 
@@ -379,6 +380,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api', moviesRoutes);
+app.use('/api/v1/auth', authRoutes);
 
 // Get file by ID endpoint
 app.get('/api/files/:fileId', async (req, res) => {

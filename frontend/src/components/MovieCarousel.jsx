@@ -26,9 +26,9 @@ const MovieCarousel = ({ title, movies, darkMode }) => {
         >
           {movies.map((movie) => (
             <MovieCard
-              key={movie.id}
+              key={movie._id}
               title={movie.title}
-              image={movie.image}
+              image={movie.coverImage}
               onClick={() => setSelectedMovie(movie)}
               darkMode={darkMode}
             />
@@ -62,3 +62,16 @@ const MovieCarousel = ({ title, movies, darkMode }) => {
 };
 
 export default MovieCarousel;
+
+
+
+
+
+
+
+
+
+
+
+
+

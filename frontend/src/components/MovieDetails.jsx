@@ -14,13 +14,17 @@ const MovieDetails = ({ movie, onClose, darkMode }) => {
 
         <div className="flex flex-col md:flex-row">
           <img
-            src={movie.image}
+            src={movie.coverImage}
             alt={movie.title}
             className="w-full md:w-[300px] h-[400px] object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
           />
           
           <div className="p-6 flex flex-col flex-1">
             <h2 className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{movie.title}</h2>
+
+            <p className={`mb-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+      {movie.description}
+    </p>
             
             <div className="flex flex-col gap-4 mt-auto">
               <button className="flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors">

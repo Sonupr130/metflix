@@ -1,106 +1,93 @@
-import jwt from 'jsonwebtoken';
-import asyncHandler from 'express-async-handler';
 import Admin from '../models/Admin.js';
+import ErrorResponse from '../utils/errorResponse.js';
+import asyncHandler from '../middlewares/async.js';
 
-// @desc    Auth user & get token
-// @route   POST /api/users/login
-const authAdmin = asyncHandler(async (req, res) => {
+// @desc    Register admin
+// @route   POST /api/v1/auth/register
+export const register = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
-  const admin = await Admin.findOne({ email });
-
-  if (admin && (await admin.matchPassword(password))) {
-    const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, {
-      expiresIn: '30d',
-    });
-
-    res.cookie('jwt', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV !== 'development',
-      sameSite: 'strict',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    });
-
-    res.json({
-      _id: admin._id,
-      name: admin.name,
-      email: admin.email,
-      token,
-    });
-  } else {
-    res.status(401);
-    throw new Error('Invalid email or password');
-  }
-});
-
-// @desc    Register a new user
-// @route   POST /api/users
-const registerAdmin = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
-
-  const adminExists = await Admin.findOne({ email });
-
-  if (adminExists) {
-    res.status(400);
-    throw new Error('User already exists');
-  }
-
+  // Create admin
   const admin = await Admin.create({
-    name,
     email,
-    password,
+    password
   });
 
-  if (admin) {
-    const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, {
-      expiresIn: '30d',
-    });
-
-    res.cookie('jwt', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV !== 'development',
-      sameSite: 'strict',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    });
-
-    res.status(201).json({
-      _id: admin._id,
-      name: admin.name,
-      email: admin.email,
-      token,
-    });
-  } else {
-    res.status(400);
-    throw new Error('Invalid user data');
-  }
+  sendTokenResponse(admin, 200, res);
 });
 
-// @desc    Logout user / clear cookie
-// @route   POST /api/users/logout
-const logoutAdmin = asyncHandler(async (req, res) => {
-  res.cookie('jwt', '', {
+// @desc    Login admin
+// @route   POST /api/v1/auth/login
+export const login = asyncHandler(async (req, res, next) => {
+  const { email, password } = req.body;
+
+  // Validate email & password
+  if (!email || !password) {
+    return next(new ErrorResponse('Please provide an email and password', 400));
+  }
+
+  // Check for admin
+  const admin = await Admin.findOne({ email }).select('+password');
+
+  if (!admin) {
+    return next(new ErrorResponse('Invalid credentials', 401));
+  }
+
+  // Check if password matches
+  const isMatch = await admin.matchPassword(password);
+
+  if (!isMatch) {
+    return next(new ErrorResponse('Invalid credentials', 401));
+  }
+
+  sendTokenResponse(admin, 200, res);
+});
+
+// Get token from model, create cookie and send response
+const sendTokenResponse = (admin, statusCode, res) => {
+  // Create token
+  const token = admin.getSignedJwtToken();
+
+  const options = {
+    expires: new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000 // 30 days in milliseconds
+    ),
     httpOnly: true,
-    expires: new Date(0),
+    secure: process.env.NODE_ENV === 'production'
+  };
+
+  res
+    .status(statusCode)
+    .cookie('token', token, options)
+    .json({
+      success: true,
+      token
+    });
+};
+
+// @desc    Get current logged in admin
+// @route   GET /api/v1/auth/me
+export const getMe = asyncHandler(async (req, res, next) => {
+  const admin = await Admin.findById(req.admin.id);
+  
+  res.status(200).json({
+    success: true,
+    data: admin
+  });
+});
+
+
+
+// @desc    Logout admin / clear cookie
+// @route   GET /api/v1/auth/logout
+export const logout = asyncHandler(async (req, res, next) => {
+  res.cookie('token', 'none', {
+    expires: new Date(Date.now() + 10 * 1000), // 10 seconds
+    httpOnly: true,
   });
 
-  res.status(200).json({ message: 'Logged out successfully' });
+  res.status(200).json({
+    success: true,
+    data: {},
+  });
 });
-
-// @desc    Get admin profile
-// @route   GET /api/admin/profile
-const getAdminProfile = asyncHandler(async (req, res) => {
-  const admin = await Admin.findById(req.admin._id);
-
-  if (admin) {
-    res.json({
-      _id: admin._id,
-      name: admin.name,
-      email: admin.email,
-    });
-  } else {
-    res.status(404);
-    throw new Error('Admin not found');
-  }
-});
-
-export { authAdmin, registerAdmin, logoutAdmin, getAdminProfile };

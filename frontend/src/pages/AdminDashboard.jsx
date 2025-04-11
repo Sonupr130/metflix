@@ -16,10 +16,6 @@ import {
   List,
   AlertCircle,
   Download,
-  Image,
-  FileText,
-  Folder,
-  Link,
   XCircle,
 } from "lucide-react";
 import ReactPlayer from "react-player";
@@ -34,6 +30,7 @@ import {
   FiSearch,
 } from "react-icons/fi";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -46,13 +43,52 @@ const AdminDashboard = () => {
     category: "",
     year: "",
     directUrl: "",
-    coverImage: null,    // For file upload
-    coverImageUrl: "",   // For URL
-    coverImagePreview: ""
+    coverImage: null, // For file upload
+    coverImageUrl: "", // For URL
+    coverImagePreview: "",
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  const [selectedMovie, setSelectedMovie] = useState(null);
+
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      // Make API call to logout endpoint
+      await axios.get("http://localhost:5000/api/v1/auth/logout", {
+        withCredentials: true,
+      });
+
+      // Clear any client-side storage if needed
+      localStorage.removeItem("authToken");
+      sessionStorage.removeItem("authToken");
+
+      navigate("/");
+
+      // Show success message
+      toast.success("Logged out successfully!", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error("Logout failed. Please try again.", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+
+      // Still redirect even if logout API fails
+      navigate("/");
+    }
+  };
 
   // ------------------------------------------------------------------
   const [files, setFiles] = useState([]);
@@ -169,7 +205,6 @@ const AdminDashboard = () => {
     }
   };
 
-
   // ------------------------------------------------------------------
 
   // Mock data for statistics
@@ -204,13 +239,13 @@ const AdminDashboard = () => {
       try {
         const response = await axios("http://localhost:5000/api/movies");
         setMovies(response.data); // Use response.data instead of just response
-        console.log(response.data)
+        console.log(response.data);
       } catch (error) {
         console.error("Error fetching movies:", error);
         setMovies([]); // Set to empty array if there's an error
       }
     };
-  
+
     fetchMovies();
   }, []);
 
@@ -218,12 +253,12 @@ const AdminDashboard = () => {
   const getMovieWithDefaults = (movie) => {
     return {
       id: movie._id || Math.random().toString(36).substr(2, 9),
-      title: movie.title || 'Untitled Movie',
-      genre: movie.category || 'Unknown Genre',
-      year: movie.year || 'Unknown Year',
-      downloads: movie.downloads || 0, 
-      status: 'active', // Default status
-      coverImage: movie.coverImage 
+      title: movie.title || "Untitled Movie",
+      genre: movie.category || "Unknown Genre",
+      year: movie.year || "Unknown Year",
+      downloads: movie.downloads || 0,
+      status: "active", // Default status
+      coverImage: movie.coverImage,
     };
   };
 
@@ -297,136 +332,29 @@ const AdminDashboard = () => {
     setSearchResults(mockApiResults);
   };
 
-  // const handleAddMovie = async (e) => {
-  //   e.preventDefault();
-
-  //   try {
-  //     const formData = new FormData();
-
-  //     // Append values or 'Not Available' if undefined/null/empty
-  //     formData.append("title", newMovie.title || "Not Available");
-  //     formData.append("description", newMovie.description || "Not Available");
-  //     formData.append("category", newMovie.category || "Not Available");
-  //     formData.append("year", newMovie.year || "Not Available");
-  //     formData.append("directUrl", newMovie.directUrl || "Not Available");
-
-  //     // if (newMovie.coverImageFile) {
-  //     //   formData.append('coverImage', newMovie.coverImageFile);
-  //     // } else {
-  //     //   // Optionally handle missing cover image
-  //     //   alert('Please select a cover image');
-  //     //   return;
-  //     // }
-
-  //     // Using axios for the request (make sure to import axios)
-  //     const response = await axios.post(
-  //       "http://localhost:5000/api/add-movie",
-  //       formData,
-  //       {
-  //         headers: {
-  //           "Content-Type": "multipart/form-data",
-  //         },
-  //       }
-  //     );
-
-  //     console.log("Movie added:", response.data);
-
-  //     // Reset form and close modal
-  //     setShowAddMovieModal(false);
-  //     setNewMovie({
-  //       title: "",
-  //       description: "",
-  //       category: "",
-  //       year: "",
-  //       directUrl: "",
-  //       coverImageFile: null,
-  //       coverImagePreview: "",
-  //     });
-  //     setSearchTerm("");
-
-  //     // Show success message
-  //     alert("Movie added successfully!");
-  //   } catch (error) {
-  //     console.error("Error adding movie:", error);
-  //     alert(
-  //       `Error: ${
-  //         error.response?.data?.error || error.message || "Failed to add movie"
-  //       }`
-  //     );
-  //   }
-  // };
-
-
-
-  // const handleAddMovie = async (e) => {
-  //   e.preventDefault();
-  
-  //   try {
-  //     const formData = new FormData();
-  
-  //     // Append all fields
-  //     formData.append("title", newMovie.title || "Not Available");
-  //     formData.append("description", newMovie.description || "Not Available");
-  //     formData.append("category", newMovie.category || "Not Available");
-  //     formData.append("year", newMovie.year || "Not Available");
-  //     formData.append("directUrl", newMovie.directUrl || "Not Available");
-      
-  //     // Append cover image URL if provided
-  //     if (newMovie.coverImageUrl) {
-  //       formData.append("coverImageUrl", newMovie.coverImageUrl);
-  //     }
-      
-  //     // Append file if uploaded
-  //     if (newMovie.coverImageFile) {
-  //       formData.append('coverImage', newMovie.coverImageFile);
-  //     }
-  
-  //     const response = await axios.post(
-  //       "http://localhost:5000/api/add-movie",
-  //       formData,
-  //       {
-  //         headers: {
-  //           "Content-Type": "multipart/form-data",
-  //         },
-  //       }
-  //     );
-  
-  //     console.log("Movie added:", response.data);
-  //     // Reset form and show success message...
-  //   } catch (error) {
-  //     console.error("Error adding movie:", error);
-  //     alert(
-  //       `Error: ${
-  //         error.response?.data?.error || error.message || "Failed to add movie"
-  //       }`
-  //     );
-  //   }
-  // };
-
-
   const handleAddMovie = async (e) => {
     e.preventDefault();
-  
+
     try {
       const formData = new FormData();
-  
+
       // Append all fields
       formData.append("title", newMovie.title || "Not Available");
       formData.append("description", newMovie.description || "Not Available");
       formData.append("category", newMovie.category || "Not Available");
       formData.append("year", newMovie.year || "Not Available");
       formData.append("directUrl", newMovie.directUrl || "Not Available");
-      
+
       // Append cover image URL if provided
       if (newMovie.coverImageUrl) {
         formData.append("coverImageUrl", newMovie.coverImageUrl);
       }
-      
+
       // Append file if uploaded
       if (newMovie.coverImageFile) {
-        formData.append('coverImage', newMovie.coverImageFile);
+        formData.append("coverImage", newMovie.coverImageFile);
       }
-  
+
       const response = await axios.post(
         "http://localhost:5000/api/add-movie",
         formData,
@@ -436,9 +364,9 @@ const AdminDashboard = () => {
           },
         }
       );
-  
+
       console.log("Movie added:", response.data);
-      
+
       // Show success toast
       toast.success("Movie added successfully!", {
         position: "top-center",
@@ -448,7 +376,7 @@ const AdminDashboard = () => {
         pauseOnHover: true,
         draggable: true,
       });
-  
+
       // Close modal and reset form
       setShowAddMovieModal(false);
       setNewMovie({
@@ -459,13 +387,14 @@ const AdminDashboard = () => {
         directUrl: "",
         coverImageFile: null,
         coverImagePreview: "",
-        coverImageUrl: ""
+        coverImageUrl: "",
       });
-  
+
       // Optional: Refresh movies list
-      const moviesResponse = await axios.get("http://localhost:5000/api/movies");
+      const moviesResponse = await axios.get(
+        "http://localhost:5000/api/movies"
+      );
       setMovies(moviesResponse.data);
-  
     } catch (error) {
       console.error("Error adding movie:", error);
       // Show error toast
@@ -483,7 +412,6 @@ const AdminDashboard = () => {
     }
   };
 
-
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -494,7 +422,7 @@ const AdminDashboard = () => {
           coverImage: file,
           coverImagePreview: reader.result,
           coverImageFile: file,
-        coverImageUrl: "" // Clear URL if file is selected
+          coverImageUrl: "", // Clear URL if file is selected
         });
       };
       reader.readAsDataURL(file);
@@ -613,31 +541,31 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-      {movies.slice(0, 5).map((movie) => {
-        const movieWithDefaults = getMovieWithDefaults(movie);
-        return (
-          <tr key={movieWithDefaults.id}>
-            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-              {movieWithDefaults.title}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {movieWithDefaults.genre}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {movieWithDefaults.year}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {movieWithDefaults.downloads}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap">
-              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                {movieWithDefaults.status}
-              </span>
-            </td>
-          </tr>
-        );
-      })}
-    </tbody>
+                    {movies.slice(0, 5).map((movie) => {
+                      const movieWithDefaults = getMovieWithDefaults(movie);
+                      return (
+                        <tr key={movieWithDefaults.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {movieWithDefaults.title}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {movieWithDefaults.genre}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {movieWithDefaults.year}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {movieWithDefaults.downloads}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                              {movieWithDefaults.status}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
                 </table>
               </div>
             </div>
@@ -737,46 +665,51 @@ const AdminDashboard = () => {
 
         {viewMode === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-  {movies.map((movie) => {
-    const movieWithDefaults = getMovieWithDefaults(movie);
-    return (
-      <div
-        key={movieWithDefaults.id}
-        className="bg-white rounded-lg shadow overflow-hidden"
-      >
-        <div className="h-48 bg-gray-200 relative">
-          <img
-            src={movieWithDefaults.coverImage || "https://user-images.githubusercontent.com/582516/98960633-6c6a1600-24e3-11eb-89f1-045f55a1e494.png"}
-            alt="cover image"
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="p-4">
-          <h3 className="font-medium text-gray-900">{movieWithDefaults.title}</h3>
-          <div className="mt-2 flex justify-between items-center">
-            <div className="text-sm text-gray-500">
-              {movieWithDefaults.genre} • {movieWithDefaults.year}
-            </div>
-            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-              {movieWithDefaults.status}
-            </span>
+            {movies.map((movie) => {
+              const movieWithDefaults = getMovieWithDefaults(movie);
+              return (
+                <div
+                  key={movieWithDefaults.id}
+                  className="bg-white rounded-lg shadow overflow-hidden"
+                >
+                  <div className="h-48 bg-gray-200 relative">
+                    <img
+                      src={
+                        movieWithDefaults.coverImage ||
+                        "https://user-images.githubusercontent.com/582516/98960633-6c6a1600-24e3-11eb-89f1-045f55a1e494.png"
+                      }
+                      alt="cover image"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-medium text-gray-900">
+                      {movieWithDefaults.title}
+                    </h3>
+                    <div className="mt-2 flex justify-between items-center">
+                      <div className="text-sm text-gray-500">
+                        {movieWithDefaults.genre} • {movieWithDefaults.year}
+                      </div>
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                        {movieWithDefaults.status}
+                      </span>
+                    </div>
+                    <div className="mt-4 flex justify-between items-center text-sm">
+                      {/* Only show downloads if greater than 0 */}
+                      {movieWithDefaults.downloads > 0 ? (
+                        <span>{movieWithDefaults.downloads} downloads</span>
+                      ) : (
+                        <span className="text-gray-400">No downloads yet</span>
+                      )}
+                      <button className="text-indigo-600 hover:text-indigo-800 font-medium">
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <div className="mt-4 flex justify-between items-center text-sm">
-            {/* Only show downloads if greater than 0 */}
-            {movieWithDefaults.downloads > 0 ? (
-              <span>{movieWithDefaults.downloads} downloads</span>
-            ) : (
-              <span className="text-gray-400">No downloads yet</span>
-            )}
-            <button className="text-indigo-600 hover:text-indigo-800 font-medium">
-              Edit
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  })}
-</div>
         ) : (
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
@@ -867,137 +800,100 @@ const AdminDashboard = () => {
                       <div className="mt-4">
                         <form onSubmit={handleAddMovie}>
                           {/* Cover Image Upload */}
-                          {/* <div className="mb-4">
+
+                          <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Cover Image
                             </label>
-                            {newMovie.coverImagePreview ? (
+
+                            {/* Image Preview */}
+                            {newMovie.coverImagePreview ||
+                            newMovie.coverImageUrl ? (
                               <div className="relative">
                                 <img
-                                  src={newMovie.coverImagePreview}
+                                  src={
+                                    newMovie.coverImagePreview ||
+                                    newMovie.coverImageUrl
+                                  }
                                   alt="Cover preview"
                                   className="h-48 w-full object-cover rounded-md"
                                 />
                                 <button
                                   type="button"
-                                  onClick={removeImage}
+                                  onClick={() => {
+                                    setNewMovie({
+                                      ...newMovie,
+                                      coverImagePreview: "",
+                                      coverImageUrl: "",
+                                      coverImageFile: null,
+                                    });
+                                  }}
                                   className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md"
                                 >
                                   <XCircle className="h-5 w-5 text-red-500" />
                                 </button>
                               </div>
                             ) : (
-                              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                                <div className="space-y-1 text-center">
-                                  <div className="flex text-sm text-gray-600 justify-center">
-                                    <label
-                                      htmlFor="cover-image"
-                                      className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none"
-                                    >
-                                      <span>Upload an image</span>
-                                      <input
-                                        id="cover-image"
-                                        name="coverImage" // Changed to match the server expectation
-                                        type="file"
-                                        className="sr-only"
-                                        accept="image/*"
-                                        onChange={handleImageChange}
-                                        required // Make it required as per your server code
-                                      />
-                                    </label>
-                                  </div>
-                                  <p className="text-xs text-gray-500">
-                                    PNG, JPG up to 2MB
-                                  </p>
-                                </div>
+                              <div className="h-48 w-full bg-gray-200 flex items-center justify-center rounded-md">
+                                <span className="text-gray-500">
+                                  No cover image selected
+                                </span>
                               </div>
                             )}
-                          </div> */}
 
-                          <div className="mb-4">
-    <label className="block text-sm font-medium text-gray-700 mb-2">
-      Cover Image
-    </label>
-    
-    {/* Image Preview */}
-    {newMovie.coverImagePreview || newMovie.coverImageUrl ? (
-      <div className="relative">
-        <img
-          src={newMovie.coverImagePreview || newMovie.coverImageUrl}
-          alt="Cover preview"
-          className="h-48 w-full object-cover rounded-md"
-        />
-        <button
-          type="button"
-          onClick={() => {
-            setNewMovie({
-              ...newMovie,
-              coverImagePreview: "",
-              coverImageUrl: "",
-              coverImageFile: null
-            });
-          }}
-          className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md"
-        >
-          <XCircle className="h-5 w-5 text-red-500" />
-        </button>
-      </div>
-    ) : (
-      <div className="h-48 w-full bg-gray-200 flex items-center justify-center rounded-md">
-        <span className="text-gray-500">No cover image selected</span>
-      </div>
-    )}
+                            {/* File Upload */}
+                            <div className="mt-4">
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Upload Cover Image
+                              </label>
+                              <div className="flex items-center">
+                                <label className="cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500">
+                                  <span>Select File</span>
+                                  <input
+                                    type="file"
+                                    className="sr-only"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                  />
+                                </label>
+                                <span className="ml-2 text-sm text-gray-500">
+                                  {newMovie.coverImageFile
+                                    ? newMovie.coverImageFile.name
+                                    : "No file chosen"}
+                                </span>
+                              </div>
+                            </div>
 
-    {/* File Upload */}
-    <div className="mt-4">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        Upload Cover Image
-      </label>
-      <div className="flex items-center">
-        <label className="cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500">
-          <span>Select File</span>
-          <input
-            type="file"
-            className="sr-only"
-            accept="image/*"
-            onChange={handleImageChange}
-          />
-        </label>
-        <span className="ml-2 text-sm text-gray-500">
-          {newMovie.coverImageFile ? newMovie.coverImageFile.name : "No file chosen"}
-        </span>
-      </div>
-    </div>
+                            {/* OR divider */}
+                            <div className="flex items-center my-4">
+                              <div className="flex-grow border-t border-gray-300"></div>
+                              <span className="mx-2 text-sm text-gray-500">
+                                OR
+                              </span>
+                              <div className="flex-grow border-t border-gray-300"></div>
+                            </div>
 
-    {/* OR divider */}
-    <div className="flex items-center my-4">
-      <div className="flex-grow border-t border-gray-300"></div>
-      <span className="mx-2 text-sm text-gray-500">OR</span>
-      <div className="flex-grow border-t border-gray-300"></div>
-    </div>
-
-    {/* Cover Image URL */}
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        Cover Image URL
-      </label>
-      <input
-        type="url"
-        value={newMovie.coverImageUrl}
-        onChange={(e) => {
-          setNewMovie({
-            ...newMovie,
-            coverImageUrl: e.target.value,
-            coverImageFile: null,
-            coverImagePreview: ""
-          });
-        }}
-        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-        placeholder="https://example.com/image.jpg"
-      />
-    </div>
-  </div>
-
+                            {/* Cover Image URL */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Cover Image URL
+                              </label>
+                              <input
+                                type="url"
+                                value={newMovie.coverImageUrl}
+                                onChange={(e) => {
+                                  setNewMovie({
+                                    ...newMovie,
+                                    coverImageUrl: e.target.value,
+                                    coverImageFile: null,
+                                    coverImagePreview: "",
+                                  });
+                                }}
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                placeholder="https://example.com/image.jpg"
+                              />
+                            </div>
+                          </div>
 
                           {/* Movie Title (not search) */}
                           <div className="mb-4 relative">
@@ -1282,7 +1178,10 @@ const AdminDashboard = () => {
                 </div>
                 <div className="ml-3">
                   <p className="text-base font-medium text-white">Admin User</p>
-                  <p className="text-sm font-medium text-indigo-200 group-hover:text-white">
+                  <p
+                    onClick={handleLogout}
+                    className="text-sm font-medium text-indigo-200 group-hover:text-white"
+                  >
                     Logout
                   </p>
                 </div>
@@ -1332,7 +1231,10 @@ const AdminDashboard = () => {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm font-medium text-white">Admin User</p>
-                    <div className="flex items-center text-xs font-medium text-indigo-200 group-hover:text-white">
+                    <div
+                      onClick={handleLogout}
+                      className="flex items-center text-xs font-medium text-indigo-200 group-hover:text-white"
+                    >
                       <LogOut className="mr-1 h-4 w-4" />
                       Logout
                     </div>

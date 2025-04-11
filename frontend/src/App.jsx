@@ -5,6 +5,8 @@ import AdminDashboard from "./pages/AdminDashboard.jsx";
 import VideoPlayer from "./components/VideoPlayer.jsx";
 import MegaFileViewer from "./components/MegaFileViewer.jsx";
 import Test from "./pages/Test.jsx";
+import AdminLogin from "./components/AdminLogin.jsx";
+import NotFound from "./pages/NotFound.jsx";
 
 
 const App = () => {
@@ -17,6 +19,8 @@ const App = () => {
         <Route path="/vi" element={<VideoPlayer />} />
         <Route path="/file" element={<MegaFileViewer />} />
         <Route path="/test" element={<Test />} />
+        <Route path="/login" element={<AdminLogin />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   );

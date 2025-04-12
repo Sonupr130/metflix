@@ -487,7 +487,7 @@ const port = process.env.PORT || 5000;
  * - Uses connection string from environment variables
  */
 mongoose.connect('mongodb+srv://sonupradhan:pradhan82@metflix.ilped1r.mongodb.net/?retryWrites=true&w=majority&appName=metflix')
-  .then(() => console.log('🔥 Connected to MongoDB successfully'))
+  .then(() => console.log('Connected to MongoDB successfully 🔥'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // MEGA Storage instance (initialized later)
@@ -495,6 +495,7 @@ let storage;
 
 // Bandwidth tracking cache for MEGA free account limits
 const bandwidthCache = new Map();
+const bandwidthResetNotices = new Map();
 
 // ======================
 // 3. MEGA STORAGE INTEGRATION
@@ -515,8 +516,8 @@ async function initializeMega() {
     });
 
     await storage.ready;
-    console.log('☁️ Connected to MEGA successfully');
-    console.log('   Account:', storage.name);
+    console.log('Connected to MEGA successfully');
+    console.log('Account:', storage.name);
     return true;
   } catch (error) {
     console.error('MEGA initialization error:', error);
@@ -602,6 +603,46 @@ async function getPath(file) {
   return path.join('/');
 }
 
+
+/**
+ * Gets the time when bandwidth limits will reset
+ * @returns {Date} The reset time
+ */
+function getBandwidthResetTime() {
+  const lastReset = bandwidthCache.get('lastReset') || Date.now();
+  const resetTime = new Date(lastReset + 6 * 60 * 60 * 1000);
+  
+  // Format as dd/mm/yyyy h:mmam/pm
+  const day = String(resetTime.getDate()).padStart(2, '0');
+  const month = String(resetTime.getMonth() + 1).padStart(2, '0');
+  const year = resetTime.getFullYear();
+  
+  let hours = resetTime.getHours();
+  const ampm = hours >= 12 ? 'pm' : 'am';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // Convert 0 to 12
+  const minutes = String(resetTime.getMinutes()).padStart(2, '0');
+  
+  return `${day}/${month}/${year} ${hours}:${minutes}${ampm}`;
+}
+
+
+function formatResetTime(date) {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  
+  let hours = date.getHours();
+  const ampm = hours >= 12 ? 'pm' : 'am';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  
+  return `${day}/${month}/${year} ${hours}:${minutes}${ampm}`;
+}
+
+
+
 // ======================
 // 5. MIDDLEWARE SETUP
 // ======================
@@ -628,7 +669,9 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     megaConnected: !!storage,
-    account: storage ? storage.name : null
+    account: storage ? storage.name : null,
+    bandwidthReset: getBandwidthResetTime().toISOString(),
+    bandwidthUsed: bandwidthCache.get('usedBandwidth') || 0
   });
 });
 
@@ -655,6 +698,20 @@ app.get('/api/files/:fileId', async (req, res) => {
     
     if (!file) {
       return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Check if bandwidth limit reached
+    if (usedBandwidth > 5 * 1024 * 1024 * 1024) {  // Fixed comparison to 5GB
+      if (!bandwidthResetNotices.has(lastReset)) {
+        bandwidthResetNotices.set(lastReset, true);
+        bandwidthResetNotices.set('lastNoticeTime', now);
+      }
+      
+      return res.status(429).json({
+        error: 'Bandwidth limit reached',
+        retryAfter: Math.ceil((lastReset + 6 * 60 * 60 * 1000 - now) / 1000),
+        resetTime: getBandwidthResetTime()
+      });
     }
 
     const fileInfo = {
@@ -761,9 +818,15 @@ app.get('/api/stream/:fileId', async (req, res) => {
 
     // Check if bandwidth limit reached
     if (usedBandwidth > 5 * 1024 * 1024 * 1024) {
+      if (!bandwidthResetNotices.has(lastReset)) {
+        bandwidthResetNotices.set(lastReset, true);
+        bandwidthResetNotices.set('lastNoticeTime', now);
+      }
+      
       return res.status(429).json({
         error: 'Bandwidth limit reached',
-        retryAfter: Math.ceil((lastReset + 6 * 60 * 60 * 1000 - now) / 1000)
+        retryAfter: Math.ceil((lastReset + 6 * 60 * 60 * 1000 - now) / 1000),
+        resetTime: getBandwidthResetTime()
       });
     }
 
@@ -947,6 +1010,47 @@ app.get('/api/verify-mega-file/:megaFileId', async (req, res) => {
   }
 });
 
+
+// CHECK BANDWIDTH STATUS
+app.get('/api/bandwidth-status', (req, res) => {
+  const now = Date.now();
+  const lastReset = bandwidthCache.get('lastReset') || now;
+  const usedBandwidth = bandwidthCache.get('usedBandwidth') || 0;
+  const limit = 5 * 1024 * 1024 * 1024; // 5GB in bytes
+  
+  // Calculate reset time (6 hours from last reset)
+  const resetTime = new Date(lastReset + 6 * 60 * 60 * 1000);
+  const isReset = now >= resetTime;
+  const isResetPeriod = now >= resetTime;
+
+  
+  // If reset period has passed, reset counters
+  if (isReset) {
+    bandwidthCache.set('lastReset', now);
+    bandwidthCache.set('usedBandwidth', 0);
+    bandwidthResetNotices.delete(lastReset);
+  }
+  
+  const secondsUntilReset = Math.max(0, Math.floor((resetTime - now) / 1000));
+  const formattedResetTime = formatResetTime(resetTime);
+  const isLimitReached = !isReset && usedBandwidth >= limit;
+  
+  res.json({
+    isLimitReached,
+    usedBandwidth: isReset ? 0 : usedBandwidth,
+    remaining: isReset ? limit : Math.max(0, limit - usedBandwidth),
+    limit,
+    resetTime: formattedResetTime,
+    secondsUntilReset,
+    isResetPeriod,
+    showNotice: !isReset && usedBandwidth >= limit * 0.9,
+    resetTime: formattedResetTime,
+  });
+});
+
+
+
+
 // ======================
 // 10. SERVER INITIALIZATION
 // ======================
@@ -956,8 +1060,9 @@ app.get('/api/verify-mega-file/:megaFileId', async (req, res) => {
  */
 initializeMega()
   .then(() => {
+    console.log('Bandwidth will reset at:', getBandwidthResetTime());
     app.listen(port, () => {
-      console.log(`🚀 Server running on port ${port}`);
+      console.log(`Server running on port ${port} 🚀`);
     });
   })
   .catch(error => {

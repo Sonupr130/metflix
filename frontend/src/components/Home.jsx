@@ -223,6 +223,42 @@ function Home() {
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('darkMode') === 'true';
   });
+  const [bandwidthStatus, setBandwidthStatus] = useState({
+    isLimitReached: false,
+    resetTime: '',
+    isResetPeriod: false
+  });
+  const [showBandwidthMarquee, setShowBandwidthMarquee] = useState(false);
+  
+  // Update your useEffect
+  useEffect(() => {
+    const fetchBandwidthStatus = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/bandwidth-status');
+        const { isLimitReached, resetTime, isResetPeriod } = response.data;
+        console.log(response.data);
+        
+        setBandwidthStatus({
+          isLimitReached,
+          resetTime,
+          isResetPeriod
+        });
+        
+        // Show marquee when NOT limited (including reset period)
+        setShowBandwidthMarquee(!isLimitReached);
+        
+      } catch (error) {
+        console.error('Error fetching bandwidth status:', error);
+      }
+    };
+  
+    fetchBandwidthStatus();
+    const interval = setInterval(fetchBandwidthStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
+  
+
+
 
   useEffect(() => {
     localStorage.setItem('darkMode', darkMode.toString());
@@ -315,11 +351,31 @@ function Home() {
       </header>
 
       {/* Marquee Text */}
-      <div className="bg-blue-600 dark:bg-blue-800 text-white py-2 mt-16 overflow-hidden">
+      {/* <div className="bg-blue-600 dark:bg-blue-800 text-white py-2 mt-16 overflow-hidden">
         <div className="animate-marquee whitespace-nowrap pt-1">
           🎬 Welcome to MetFlix - Your Ultimate Streaming Destination! New releases every week! Watch anywhere, anytime. Premium content available in 4K HDR. 🎥 Join now and get 30 days free trial!
         </div>
-      </div>
+      </div> */}
+      {showBandwidthMarquee && (
+  <div className="bg-green-500 dark:bg-green-800 text-white py-2 mt-16 overflow-hidden">
+    <div 
+      className="whitespace-nowrap pt-1"
+      style={{
+        display: 'inline-block',
+        paddingLeft: '100%',
+        animation: 'marquee 15s linear infinite',
+        willChange: 'transform' // Optimize for performance
+      }}
+    >
+      {bandwidthStatus.isResetPeriod ? (
+        "🎉 Bandwidth limit has been reset! Enjoy unlimited streaming until next limit period. "
+      ) : (
+        "🎬 Welcome to MetFlix - Your Ultimate Streaming Destination! Enjoy your movies! "
+      )}
+    </div>
+  </div>
+)}
+
 
       {/* Main Content */}
       <main className="flex-grow container mx-auto px-4 sm:px-6 py-6 mt-4 md:max-w-3xl lg:max-w-5xl xl:max-w-6xl">

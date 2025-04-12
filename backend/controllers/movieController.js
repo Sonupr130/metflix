@@ -13,45 +13,11 @@ if (!fs.existsSync(uploadDir)) {
 }
  
 // Add a new movie ORIGINLA CONTROLLER
-// export const addMovie = async (req, res) => {
-//   try {
-//     const { title, description, category, year, directUrl } = req.body;
-    
-//     // Handle file upload
-//     let coverImagePath = '';
-//     // if (req.file) {
-//     //   const fileExt = path.extname(req.file.originalname);
-//     //   const fileName = `${Date.now()}${fileExt}`;
-//     //   coverImagePath = `/uploads/${fileName}`;
-      
-//     //   // Move the file to uploads directory
-//     //   fs.renameSync(req.file.path, path.join(uploadDir, fileName));
-//     // } else {
-//     //   return res.status(400).json({ error: 'Cover image is required' });
-//     // }
-
-//     const movie = new Movie({
-//       title,
-//       description,
-//       category,
-//       year,
-//       directUrl,
-//       coverImage: coverImagePath
-//     });
-
-//     await movie.save();
-//     res.status(201).json(movie);
-//   } catch (error) {
-//     console.error('Error adding movie:', error);
-//     res.status(500).json({ error: 'Failed to add movie' });
-//   }
-// };
-
 
 
 export const addMovie = async (req, res) => {
   try {
-    const { title, description, category, year, directUrl, coverImageUrl } = req.body;
+    const { title, description, category, year, directUrl, coverImageUrl, megaFileId } = req.body;
     
     let coverImagePath = '';
     
@@ -73,12 +39,17 @@ export const addMovie = async (req, res) => {
       coverImagePath = 'https://user-images.githubusercontent.com/582516/98960633-6c6a1600-24e3-11eb-89f1-045f55a1e494.png'; // Your default image path
     }
 
+    if (!megaFileId) {
+      return res.status(400).json({ error: "MEGA File ID is required" });
+    }
+
     const movie = new Movie({
       title,
       description,
       category,
       year,
       directUrl,
+      megaFileId,
       coverImage: coverImagePath
     });
 
@@ -142,3 +113,6 @@ export const getMoviesByCategory = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch movies' });
   }
 };
+
+
+

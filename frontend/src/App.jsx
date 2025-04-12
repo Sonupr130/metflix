@@ -7,6 +7,7 @@ import MegaFileViewer from "./components/MegaFileViewer.jsx";
 import Test from "./pages/Test.jsx";
 import AdminLogin from "./components/AdminLogin.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import Player from "./components/Player.jsx";
 
 
 const App = () => {
@@ -21,6 +22,7 @@ const App = () => {
         <Route path="/test" element={<Test />} />
         <Route path="/login" element={<AdminLogin />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="/player" element={<Player />} />
       </Routes>
     </div>
   );

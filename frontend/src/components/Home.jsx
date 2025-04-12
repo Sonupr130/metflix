@@ -277,7 +277,7 @@ function Home() {
   });
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-[#eeeeee]'}`}>
+    <div className={`min-h-screen flex flex-col ${darkMode ? 'dark bg-gray-900' : 'bg-[#eeeeee]'}`}>
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md">
         <div className="container mx-auto px-5 sm:px-20 py-3">
@@ -322,7 +322,7 @@ function Home() {
       </div>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 sm:px-6 py-6 mt-4 md:max-w-3xl lg:max-w-5xl xl:max-w-6xl">
+      <main className="flex-grow container mx-auto px-4 sm:px-6 py-6 mt-4 md:max-w-3xl lg:max-w-5xl xl:max-w-6xl">
         {/* Error Message */}
         {error && (
           <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4">
@@ -415,7 +415,7 @@ function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white dark:bg-gray-900 shadow-md mt-8">
+      <footer className="bg-white dark:bg-gray-900 shadow-md">
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 lg:px-10">
             <div>

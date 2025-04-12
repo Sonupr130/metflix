@@ -675,6 +675,10 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.get('/', (req, res) => {
+  res.send("BACKEIND IS CONNECTED!! 🤡")
+})
+
 // Mount route modules
 app.use('/api', moviesRoutes); // Movie-related routes
 app.use('/api/v1/auth', authRoutes); // Authentication routes
